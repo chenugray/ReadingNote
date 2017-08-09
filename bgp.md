@@ -1,4 +1,4 @@
-#BGP
+# BGP
 > BGP(Border Gateway Protocol)自治区间路由协议，主要作用就是交换网络可达性信息(NLRI)。NLRI足够构建出AS间的网络连接图。BGP4支持CIDR、路由聚合。
 > BGP使用TCP协议作为其传输协议，这就免除了分片重组、重传、确认、以及序列。BGP监听TCP端口179，当处理BGP ERROR Notification时，TCP支持Graceful Close很好的关闭BGP连接。BGP使用TCP连接两个系统，通过Open消息建立交换协商连接参数。BGP以增量更新路由表的变化，并不要求周期性刷新路由表。Keepalive消息周期的发送确保连接不中断。Notification消息当遇到Error时，发送关闭连接。
 
