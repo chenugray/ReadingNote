@@ -46,6 +46,56 @@ Unfeasible Route|不再可用的Feasible Route
 > Open消息最短29字节
 
 ### Update消息格式
+![update_message.png](update_message.png)
+> Update消息用来在BGP邻居间传递路由信息，Update消息中的信息可以用来构建图来描述各自治系统之间的关系。
+> Update消息用来广播邻居间具有相同路径属性的可行路由，或者撤销多条不可行路由。一条Update消息可以同时发布路由和撤销路由。
+> **Withdrawn Routes Length**:2字节无符号整数，Withdrawn Routes长度，通过其长度可以计算NLRI字段的长度
+> **Withdrawn Routes**:包含了一组需要被撤销的IP地址前缀，2元组描述`<Length(1 octet), Prefix>`
+![WithdrawnRoutesField.ppng](WithdrawnRoutesField.png)
+>> Prefix字段包含了IP地址的前缀，以及尾封装使得该字段为长度为字节的整数倍
+>
+> **Total Path Attribute Length**:2字节无符号整数，说明Path Attributes字段的长度，通过其长度可以计算NLRI字段的长度
+> **Path Attributes**:每个Attribute都是三元组`<Attribute Type, Attribute Length, Attribute Value>`
+![path_attribute.png](path_attribute.png)
+>> Attr Type的高字节bit 0，optional字段，标识属性是optional(1)，或者是well-known(0)
+>> Attr Type的高字节bit 1，transitive字段，标识属性是可传递(1)或者是不可传递的(0),对于well-known属性，该字段必须设置为1
+>> Attr Type的高字节bit 2，partial字段，标识属性是否完整，对well-known属性和optional non-transitive属性该字段必须设置为0
+>> Attr Type的高字节bit 3，entended length bit字段，标示Attribute Length是1字节(0)还是2字节(1)
+>>
+>> |Type Code|Attr Value|
+>> |:--:|:---------------------------------------------------------------------------------------------------:|
+>> |1|Origin字段，well-known mandatory属性，定义了路径信息的起点类型<br/>0 IGP,即AS内部产生<br/>1 EGP,通过EGP协议学习到<br/>2 IMCOMPLETE|
+>> |2|AS Path字段，well-known mandatory属性，由AS path segment<br/>`<path segment type,path segement length,path segment value>`组成<br/>|
+>> |3|Next Hop字段，well-known mandatory属性，定义了到达NLRI列出来的目的地址所需要经过路由器下一跳的IP地址|
+>> |4|Multi Exit Disc字段，non-transitive属性|
+>> |5|Local Pref字段，well-known mandatory属性，用来同时AS内部邻居广播路由preference|
+>> |6|Atomic Aggregate字段，well-known自行决定属性|
+>> |7|Aggregator字段，optional transitive 属性，6字节，前2字节AS号，后4字节聚合路由IP地址。|
+>
+> **Network Layer Reachability Information**:包含了一组IP地址前缀，长度为Update message Length - 23 -Total Path Attributes Length - Withdary Routes Length，NLRI封装为二元组`<length, Prefix>`
+> 一条Update消息可以发布一组多目的地址路径属性，这些目的地址共享这些路径属性。
 
+### Keepalive消息格式
+> BGP不使用TCP的keep alive机制来决定邻居是否可达。Keepalive消息足够用来保持Hold Timer不过期，合理的Keepalive发送间隔时间应该为1/3的Holder Timer，发送时间不应该小于1秒。
 
+### Notification消息格式
+> 当错误被检测发送Notification消，BGP连接立即关闭。
+![notification_message.png](notification_message.png)
+>
+> |Error Code|Symbolic Name|
+> |:--------:|:----------:|
+> |1|Message Header Error|
+> |2|Open Message Error|
+> |3|Update Message Error|
+> |4|Hold Timer Expired|
+> |5|Finite State Machine Error|
+> |6|Cease|
+
+## Path Attributes
+> Path Attributes可以分为以下4类：
+> - Well-known mandatory
+> - Well-known discretionary
+> - Optional transitive
+> - Optional non-transitive
+> BGP协议要求必须能够识别所有的`well-known`属性，包含NLRI的Update消息中必须包含这些`mandatory`消息。
 
